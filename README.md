@@ -19,6 +19,8 @@ Microclimate heterogeneity and behavioural thermoregulation can buffer ectotherm
   - dataJUNE_warm.R: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in June (future)
 
 - **Raster layers**
+  - xy.data.RData: list of coordinates for raster layers
+  - cells.RData: list of cells' IDs
   - map.grd/.gri: base raster layer
   - buffer_map.grd/.gri: predicted buffer (delta Tb/delta Te)
   - meandb_map.grd/.gri: thermoregulatory inaccuracy (current conditions)
