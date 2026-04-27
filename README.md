@@ -10,18 +10,18 @@ Microclimate heterogeneity and behavioural thermoregulation can buffer ectotherm
 ## Repository content: 
 <p> <b> RCode_biophysical_model.R: </b>  Code to generate mechanistic layers (thermoregulatory inaccuracy and thermoregulatory window) </p> 
 <p> <b> Sources file </b> </p>
-    &nbsp <p> <b> SIMULATION RESULTS </b> </p>
-    &ensp<p> - dataMAY.R </p>: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in May (current)
-    &ensp<p> - dataJUNE.R </p>: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in June (current)
-    &ensp<p> - dataMAY_warm.R </p>: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in May (future)
-    &ensp<p> - dataJUNE_warm.R </p>: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in June (future)
-    &nbsp <p> <b> RASTER LAYERS </b> </p>
-    &ensp<p> - map.grd/.gri </p>: base raster layer
-    &ensp<p> - buffer_map.grd/.gri </p>: predicted buffer (delta Tb/delta Te)
-    &ensp<p> - meandb_map.grd/.gri </p>: thermoregulatory inaccuracy (current conditions)
-    &ensp<p> - meanActivity_map.grd/.gri </p>: thermoregulatory window (current conditions)
-    &ensp<p> - meandb_warm_map.grd/.gri </p>: thermoregulatory inaccuracy (future)
-    &ensp<p> - meanActivity_warm_map.grd/.gri </p>: thermoregulatory window (future)
+    &nbsp <b> SIMULATION RESULTS </b> 
+    &ensp - dataMAY.R: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in May (current)
+    &ensp - dataJUNE.R: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in June (current)
+    &ensp - dataMAY_warm.R: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in May (future)
+    &ensp - dataJUNE_warm.R: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in June (future)
+    &nbsp <b> RASTER LAYERS </b> 
+    &ensp - map.grd/.gri: base raster layer
+    &ensp - buffer_map.grd/.gri: predicted buffer (delta Tb/delta Te)
+    &ensp - meandb_map.grd/.gri: thermoregulatory inaccuracy (current conditions)
+    &ensp - meanActivity_map.grd/.gri: thermoregulatory window (current conditions)
+    &ensp - meandb_warm_map.grd/.gri: thermoregulatory inaccuracy (future)
+    &ensp - meanActivity_warm_map.grd/.gri: thermoregulatory window (future)
     
 # Session Info
 R version 4.4.1 (2024-06-14 ucrt)
