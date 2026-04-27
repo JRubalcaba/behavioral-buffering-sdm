@@ -10,7 +10,15 @@ Microclimate heterogeneity and behavioural thermoregulation can buffer ectotherm
 ## Repository content: 
 **R Codes** 
 - RCode_biophysical_model.R: R code for the validation of biophysical model and generation of mechanistic layers (thermoregulatory inaccuracy and thermoregulatory window)
-
+- RCode_microclimate_model.R: R code to generate microclimatic conditions at the study area using NicheMapR (Kearney et al. 2020) and microclima (Maclean et al. 2019)
+**Microclimate data file**
+- **Microclimate model output**
+    - ElPardo_X_metout.csv: Output of the microclimate model in the study area, year X (1997-2022) - sun-exposed conditions
+    - ElPardo_X_shadmet.csv: Output of the microclimate model in the study area, year X (1997-2022) - shaded conditions (75% shade)
+    - ElPardo_X_soil.csv: Output of the microclimate model in the study area, year X (1997-2022) - soil temperature in the sun
+    - ElPardo_X_shadsoil.csv: Output of the microclimate model in the study area, year X (1997-2022) - soil temperature in the shade
+    - field_Te.csv: Empirical operative temperature data (data from Diaz et al. 2022 Funct Ecol)
+    - field_Tb.csv: Empirical field body temperature data (data from Diaz et al. 2022 Funct Ecol)
 **Sources file**
 - **Simualtion results**
   - dataMAY.R: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in May (current)
