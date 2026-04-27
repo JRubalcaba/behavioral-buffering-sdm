@@ -9,7 +9,7 @@ Microclimate heterogeneity and behavioural thermoregulation can buffer ectotherm
 
 ## Repository content: 
 **R Codes** 
-- RCode_biophysical_model.R:Code to generate mechanistic layers (thermoregulatory inaccuracy and thermoregulatory window)
+- RCode_biophysical_model.R: R code for the validation of biophysical model and generation of mechanistic layers (thermoregulatory inaccuracy and thermoregulatory window)
 
 **Sources file**
 - **Simualtion results**
