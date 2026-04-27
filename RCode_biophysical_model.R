@@ -105,6 +105,230 @@ Te_model <- function(M, L, a, ground=T, use_Tsk=T, S, Ta, Tsk, Tg, v, RH, offset
   return(j/theta)
 }
 
+####### Load microclimate and field temperature data ----
+
+dir <- "C:/..."
+year="2022" # Select year ("1997" OR "2022")
+datamicro_soil <- read.csv(paste0(dir,"/Microclimate data/ElPardo",year,"_soil.csv"), sep=",", header=T) # FROM http://bioforecasts.science.unimelb.edu.au/app_direct/soil_ncep/
+datamicro_metout <- read.csv(paste0(dir,"/Microclimate data/ElPardo",year,"_metout.csv"), sep=",", header=T)
+datamicro_shadmet <- read.csv(paste0(dir,"/Microclimate data/ElPardo",year,"_shadmet.csv"), sep=",", header=T)
+datamicro_shadsoil <- read.csv(paste0(dir,"/Microclimate data/ElPardo",year,"_shadsoil.csv"), sep=",", header=T)
+
+datamicro_metout$day <- as.numeric(format(as.Date(datamicro_metout$dates,format="%Y-%m-%d"), format = "%d"))
+datamicro_metout$month <- format(as.Date(datamicro_metout$dates,format="%Y-%m-%d"), format = "%m")
+datamicro_metout$year <- format(as.Date(datamicro_metout$dates,format="%Y-%m-%d"), format = "%Y")
+datamicro_metout$datetime <- as.POSIXct(paste(datamicro_metout$dates, datamicro_metout$TIME/1440*24), format="%Y-%m-%d %H")
+
+datamicro_shadmet$day <- as.numeric(format(as.Date(datamicro_shadmet$dates,format="%Y-%m-%d"), format = "%d"))
+datamicro_shadmet$month <- format(as.Date(datamicro_shadmet$dates,format="%Y-%m-%d"), format = "%m")
+datamicro_shadmet$year <- format(as.Date(datamicro_shadmet$dates,format="%Y-%m-%d"), format = "%Y")
+datamicro_shadmet$datetime <- as.POSIXct(paste(datamicro_shadmet$dates, datamicro_shadmet$TIME/1440*24), format="%Y-%m-%d %H")
+
+datamicro_soil$day <- as.numeric(format(as.Date(datamicro_soil$dates,format="%Y-%m-%d"), format = "%d"))
+datamicro_soil$month <- format(as.Date(datamicro_soil$dates,format="%Y-%m-%d"), format = "%m")
+datamicro_soil$year <- format(as.Date(datamicro_soil$dates,format="%Y-%m-%d"), format = "%Y")
+datamicro_soil$datetime <- as.POSIXct(paste(datamicro_soil$dates, datamicro_soil$TIME/1440*24), format="%Y-%m-%d %H")
+
+datamicro_shadsoil$day <- as.numeric(format(as.Date(datamicro_shadsoil$dates,format="%Y-%m-%d"), format = "%d"))
+datamicro_shadsoil$month <- format(as.Date(datamicro_shadsoil$dates,format="%Y-%m-%d"), format = "%m")
+datamicro_shadsoil$year <- format(as.Date(datamicro_shadsoil$dates,format="%Y-%m-%d"), format = "%Y")
+datamicro_shadsoil$datetime <- as.POSIXct(paste(datamicro_shadsoil$dates, datamicro_shadsoil$TIME/1440*24), format="%Y-%m-%d %H")
+
+data_fieldTb <- read.csv(paste0(dir,"/Microclimate data/field_Tb.csv"), sep=",", header=T)
+data_fieldTe <- read.csv(paste0(dir,"/Microclimate data/field_Te.csv"), sep=",", header=T)
+
+####### Operative temperature model ----
+# Lizard's traits
+M = 8.3 # Body mass (g)
+L = 0.069 # SVL (m)
+a = 0.9  # Skin absorbance (P. muralis; Clusella-Trullas et al. 2011)
+
+maxshade = 75
+shlev = 1-maxshade/100 # % sun in shaded spots
+datamicro_metout$Te_sun <- Te_model(M, L, a, use_Tsk = T, ground = F, S=datamicro_metout$SOLR, Ta=datamicro_metout$TALOC, 
+                                    Tsk=datamicro_metout$TSKYC, Tg=datamicro_soil$D0cm, v=datamicro_metout$VLOC,
+                                    RH=datamicro_metout$RHLOC)
+datamicro_shadmet$Te_shade <- Te_model(M, L, a, use_Tsk = T, ground = F, S=datamicro_shadmet$SOLR*shlev, Ta=datamicro_shadmet$TALOC, 
+                                       Tsk=datamicro_shadmet$TSKYC, Tg=datamicro_shadsoil$D0cm, v=datamicro_shadmet$VLOC,
+                                       RH=datamicro_shadmet$RHLOC)
+
+####### Body temperature model ----
+
+# Behavioral thermoregulation parameters
+lambda = 0.8  # Thermoregulatory constraint (-)
+Tpref = 33.8    # Preferred temperature (ºC) -> Tpref_MAY -> 32.9; 
+lag = 60       # time lag (sec)
+maxshade = 75 # maximum shade level
+shlev = 1-maxshade/100 # % sun in shaded spots
+# Year	Lambda	Tpref
+# 1997	 0.95	  33.8
+# 2022   0.8	  33.8
+
+# Lizard's traits
+M = 8.3 # Body mass (g)
+L = 0.069 # SVL (m)
+a = 0.9  # Skin absorbance (P. muralis; Clusella-Trullas et al. 2011)
+
+days <- sort(unique(data_fieldTb$day[which(data_fieldTb$month==5 & data_fieldTb$year==year)])) # Days with field Tb information
+reps <- 10 # number of simulations
+Tbs <- locations <- array(NA, dim=c(1,reps))
+for(day in days){
+  # Subset of the microclimate database to consider only days in which empirical Tb data were collected
+  datasun <- datamicro_metout[which(datamicro_metout$month=="05" & datamicro_metout$day == day),]
+  datashade <- datamicro_shadmet[which(datamicro_shadmet$month=="05" & datamicro_shadmet$day == day),]
+  datasoil <- datamicro_soil[which(datamicro_soil$month=="05" & datamicro_soil$day == day),]
+  datasoilshade <- datamicro_shadsoil[which(datamicro_shadsoil$month=="05" & datamicro_shadsoil$day == day),]
+  
+  seq_min <- seq(1,nrow(datasun),length.out=nrow(datasun)*60)
+  TIME_fun <- approxfun(datasun$TIME ~ I(1:nrow(datasun)))
+  TIME <- TIME_fun(seq_min)
+  
+  # transform hourly estimations into minutely values to run the behavioral
+  # thermoregulation model
+  SOLR_sun_fun <- approxfun(datasun$SOLR ~ I(1:nrow(datasun)))
+  SOLR_sun <- SOLR_sun_fun(seq_min)
+  TA_sun_fun <- approxfun(datasun$TALOC ~ I(1:nrow(datasun)))
+  TA_sun <- TA_sun_fun(seq_min)
+  TS_sun_fun <- approxfun(datasoil$D0cm ~ I(1:nrow(datasoil)))
+  TS_sun <- TS_sun_fun(seq_min)
+  TSK_sun_fun <- approxfun(datasun$TSKYC ~ I(1:nrow(datasun)))
+  TSK_sun <- TSK_sun_fun(seq_min)
+  V_sun_fun <- approxfun(datasun$VLOC ~ I(1:nrow(datasun)))
+  V_sun <- V_sun_fun(seq_min)
+  
+  TA_shade_fun <- approxfun(datashade$TALOC ~ I(1:nrow(datashade)))
+  TA_shade <- TA_shade_fun(seq_min)
+  TS_shade_fun <- approxfun(datasoilshade$D0cm ~ I(1:nrow(datasoilshade)))
+  TS_shade <- TS_shade_fun(seq_min)
+  TSK_shade_fun <- approxfun(datashade$TSKYC ~ I(1:nrow(datashade)))
+  TSK_shade <- TSK_shade_fun(seq_min)
+  V_shade_fun <- approxfun(datashade$VLOC ~ I(1:nrow(datashade)))
+  V_shade <- V_shade_fun(seq_min)
+  
+  # Behavioral thermoregulation model
+  duration <- 23*60 # min
+  Tb <- location <- array(NA,dim=c(duration,reps))
+  Tb[1,] <- TA_shade[1]
+  location[1,] <- -1
+  for(rep in 1:reps){ # Repeat "rep" times
+    for(i in 2:duration){ # for each minute:
+      # Derive expected Tb in both sun and shaded conditions
+      TbSun <- Tb_t_model(M=M, L=L, a=a, ground=F, use_Tsk=T, S=SOLR_sun[i-1], Ta=TA_sun[i-1],
+                          Tsk=TSK_sun[i-1],Tg=TS_sun[i-1], v=V_sun[i-1], RH=0.5,
+                          T0=Tb[i-1,rep], time=lag)
+      TbShade <- Tb_t_model(M=M, L=L, a=a, ground=F, use_Tsk=T, S=SOLR_sun[i-1]*shlev, Ta=TA_shade[i-1],
+                            Tsk=TSK_shade[i-1],Tg=TS_shade[i-1], v=V_shade[i-1], RH=0.5,
+                            T0=Tb[i-1,rep], time=lag)
+      
+      # Compute abs distance to Tpref in both sun and shaded conditions
+      wTsun <- abs(TbSun - Tpref) 
+      wTshade <- abs(TbShade - Tpref) 
+      Z <- exp(-lambda*wTsun) + exp(-lambda*wTshade)
+      if(Z==0) Z=1e-3
+      Psun <- exp(-lambda*wTsun) / Z # probability of selecting sun-exposed conditions
+      
+      if(rbinom(1,1,Psun)){ # if the animal moves to sun
+        Tb[i,rep] <- TbSun
+        location[i,rep] <- 1
+      }else{ # if it moves to the shade
+        Tb[i,rep] <- TbShade
+        location[i,rep] <- -1
+      }
+    }
+  }
+  Tbs <- rbind(Tbs, Tb)
+  locations <- rbind(locations, location)
+}
+Tbs <- Tbs[-1,]
+locations <- locations[-1,]
+ndays <- sort(rep(days,duration))
+ntimes <- rep(sort(rep(2:24, 60)),length(days))
+
+days_field_data <- as.numeric(days)+120 # Calculate DOY
+data_sub_sun <- datamicro_metout[which(datamicro_metout$DOY == days_field_data[1]),]
+data_sub_shade <- datamicro_shadmet[which(datamicro_shadmet$DOY == days_field_data[1]),]
+data_fieldTe_SUN <- data_fieldTe[which(data_fieldTe$month==5 & data_fieldTe$year == year & data_fieldTe$SUN_EXPOSURE == "Sun"),]
+data_fieldTe_SUN$DOY <- as.numeric(data_fieldTe_SUN$day)+120
+data_fieldTe_SUN_DOY <- data_fieldTe_SUN[which(data_fieldTe_SUN$DOY == days_field_data[1]),]
+data_fieldTe_SHADE <- data_fieldTe[which(data_fieldTe$month==5 & data_fieldTe$year == year & data_fieldTe$SUN_EXPOSURE == "Shade"),]
+data_fieldTe_SHADE$DOY <- as.numeric(data_fieldTe_SHADE$day)+120
+data_fieldTe_SHADE_DOY <- data_fieldTe_SHADE[which(data_fieldTe_SHADE$DOY == days_field_data[1]),]
+data_fieldTe_SUNSHADE <- data_fieldTe[which(data_fieldTe$month==5 & data_fieldTe$year == year & data_fieldTe$SUN_EXPOSURE == "Sun-shade"),]
+data_fieldTe_SUNSHADE$DOY <- as.numeric(data_fieldTe_SUNSHADE$day)+120
+data_fieldTe_SUNSHADE_DOY <- data_fieldTe_SUNSHADE[which(data_fieldTe_SUNSHADE$DOY == days_field_data[1]),]
+
+for(i in 2:length(days_field_data)){
+  data_sub_sun <- rbind(data_sub_sun,datamicro_metout[which(datamicro_metout$DOY == days_field_data[i]),])
+  data_sub_shade <- rbind(data_sub_shade,datamicro_shadmet[which(datamicro_shadmet$DOY == days_field_data[i]),])
+  data_fieldTe_SUN_DOY <- rbind(data_fieldTe_SUN_DOY,data_fieldTe_SUN[which(data_fieldTe_SUN$DOY == days_field_data[i]),])
+  data_fieldTe_SHADE_DOY <- rbind(data_fieldTe_SHADE_DOY,data_fieldTe_SHADE[which(data_fieldTe_SHADE$DOY == days_field_data[i]),])
+  data_fieldTe_SUNSHADE_DOY <- rbind(data_fieldTe_SUNSHADE_DOY,data_fieldTe_SUNSHADE[which(data_fieldTe_SUNSHADE$DOY == days_field_data[i]),])
+}
+
+shift = 2 # adjust summer time difference
+code_modTe <- paste0(data_sub_sun$DOY,"_", shift+data_sub_sun$TIME/60)
+code_obsTe_sun <- paste0(data_fieldTe_SUN_DOY$DOY,"_", data_fieldTe_SUN_DOY$TIME)
+code_obsTe_shade <- paste0(data_fieldTe_SHADE_DOY$DOY,"_", data_fieldTe_SHADE_DOY$TIME)
+code_obsTe_sunshade <- paste0(data_fieldTe_SUNSHADE_DOY$DOY,"_", data_fieldTe_SUNSHADE_DOY$TIME)
+
+modTe_sun <- data_sub_sun$Te[match(code_obsTe_sun,code_modTe)]
+modTe_shade <- data_sub_shade$Te[match(code_obsTe_shade,code_modTe)]
+modTe_sunshade <- data_sub_shade$Te[match(code_obsTe_sunshade,code_modTe)]
+
+# Summarize Observed vs predicted operative temperatures for each hour
+Te_sun_obs <- tapply(data_fieldTe_SUN_DOY$Te, data_fieldTe_SUN_DOY$TIME, mean)
+Te_sun_obs_SD <- tapply(data_fieldTe_SUN_DOY$Te, data_fieldTe_SUN_DOY$TIME, sd)
+Te_shade_obs <- tapply(data_fieldTe_SHADE_DOY$Te, data_fieldTe_SHADE_DOY$TIME, mean)
+Te_shade_obs_SD <- tapply(data_fieldTe_SHADE_DOY$Te, data_fieldTe_SHADE_DOY$TIME, sd)
+Te_sun_pred <- tapply(modTe_sun, data_fieldTe_SUN_DOY$TIME, mean)
+Te_sun_pred_SD <- tapply(modTe_sun, data_fieldTe_SUN_DOY$TIME, sd)
+Te_shade_pred <- tapply(modTe_shade, data_fieldTe_SHADE_DOY$TIME, mean)
+Te_shade_pred_SD <- tapply(modTe_shade, data_fieldTe_SHADE_DOY$TIME, sd)
+n_obs_sun <- tapply(data_fieldTe_SUN_DOY$Te, data_fieldTe_SUN_DOY$TIME, length)
+n_obs_shade <- tapply(data_fieldTe_SHADE_DOY$Te, data_fieldTe_SHADE_DOY$TIME, length)
+
+# Operative temperatures in the sun (Observed vs Predicted)
+ggplot(mapping=aes(y=Te_sun_obs, x=Te_sun_pred)) + # 500 x 400
+  theme_classic() + ylab("Observed Te (ºC)") + xlab("Predicted Te (ºC)") +
+  ylim(20,80) + xlim(20,80) +
+  theme(axis.text = element_text(size=10, colour="black"),
+        axis.title = element_text(size=12)) +
+  geom_point(size=n_obs_sun*0.1) + geom_abline(intercept=0, slope = 1) +
+  geom_errorbar(aes(ymin=Te_sun_obs-Te_sun_obs_SD, ymax=Te_sun_obs+Te_sun_obs_SD), width=1, position=position_dodge(.9)) +
+  geom_errorbar(aes(xmin=Te_sun_pred-Te_sun_pred_SD, xmax=Te_sun_pred+Te_sun_pred_SD), width=1, position=position_dodge(.9)) 
+
+# Operative temperatures in the shade (Observed vs Predicted)
+ggplot(mapping=aes(y=Te_shade_obs, x=Te_shade_pred)) + # 500 x 400
+  theme_classic() + ylab("Observed Te (ºC)") + xlab("Predicted Te (ºC)") +
+  ylim(10,40) + xlim(10,40) +
+  theme(axis.text = element_text(size=10, colour="black"),
+        axis.title = element_text(size=12)) +
+  geom_point(size=n_obs_shade*0.1) + geom_abline(intercept=0, slope = 1) +
+  geom_errorbar(aes(ymin=Te_shade_obs-Te_shade_obs_SD, ymax=Te_shade_obs+Te_shade_obs_SD), width=1, position=position_dodge(.9)) +
+  geom_errorbar(aes(xmin=Te_shade_pred-Te_shade_pred_SD, xmax=Te_shade_pred+Te_shade_pred_SD), width=1, position=position_dodge(.9)) 
+
+# Summarize Observed vs predicted body temperatures for each hour
+predTb <- tapply(Tbs[,1], ntimes, function(x) mean(x))
+predTb_SD <- tapply(Tbs[,1], ntimes, function(x) sd(x))
+obsTb <- tapply(data_fieldTb$Tb, data_fieldTb$TIME, function(x) mean(x,na.rm=T))
+obsTb_SD <- tapply(data_fieldTb$Tb, data_fieldTb$TIME, function(x) sd(x,na.rm=T))
+n_obs <- tapply(data_fieldTb$Tb, data_fieldTb$TIME, length)
+
+y <- predTb[match(names(obsTb), names(predTb))]
+predTb <- y[which(!is.na(y))]
+y <- predTb_SD[match(names(obsTb), names(predTb_SD))]
+predTb_SD <- y[which(!is.na(y))]
+
+ggplot(mapping=aes(y=obsTb, x=predTb)) +
+  theme_classic() + ylab("Observed Tb (ºC)") + xlab("Predicted Tb (ºC)") +
+  ylim(20,40) + xlim(20,40) +
+  theme(axis.text = element_text(size=10, colour="black"),
+        axis.title = element_text(size=12)) +
+  geom_point(size=n_obs*0.5) + geom_abline(intercept=0, slope = 1) +
+  geom_errorbar(aes(ymin=obsTb-obsTb_SD, ymax=obsTb+obsTb_SD), width=.2, position=position_dodge(.9)) +
+  geom_errorbar(aes(xmin=predTb-predTb_SD, xmax=predTb+predTb_SD), width=.2, position=position_dodge(.9)) 
+
+
 ####### Geographical projections ----
 require(NicheMapR)
 require(microclima)
@@ -119,7 +343,7 @@ map <- raster(paste0(dir,"Sources/map.grd"))
 
 # Create a function to run the NicheMapR microcliamte model across cells
 # extract conditions in the sun and in the shade
-# transform houtly estimations into minutely values to run the behavioral
+# transform hourly estimations into minutely values to run the behavioral
 # thermoregulation model
 compute_microclimates <- function(lat, long, month, maxshade, warm=0){
   ## Run NicheMapR microcolimate model (Kearney et al. 2017 Ecography)
@@ -191,7 +415,7 @@ load(file=paste0(dir,"Sources/predicted_warming.RData")) # MIROC6, RCP 8.5, 2041
 str(predicted_warming) # col1: predicted temperature increase in may
                        # col2: predicted T increase in june
 
-##### Behavioral thermoregulation model ----
+####### Behavioral thermoregulation model ----
 
 # General parameters
 M = 8.3 # Body mass (g)
@@ -298,7 +522,7 @@ dataMAY_warm <- data.frame(meanTb, daytimeTb, meanTe_sun, meanTe_shade, daytimeT
 dataJUNE_warm <- data.frame(meanTb, daytimeTb, meanTe_sun, meanTe_shade, daytimeTe_sun,
                            daytimeTe_shade, E_daytime, db_daytime, Activity, xy.values)
 
-##### Load model output ----
+####### Load model output ----
 # Simulated temperatures for May under current conditions
 dataMAY <- read.table(file=paste0(dir,"Sources/dataMAY.R"))
 # May temperatures under climate change scenario 
@@ -325,7 +549,7 @@ TeIncrease_JUNE <- dataJUNE_warm$meanTe_shade - dataJUNE$meanTe_shade
 bufferMAY <- TbIncrease_MAY / TeIncrease_MAY # Predicted buffering
 bufferJUNE <- TbIncrease_JUNE / TeIncrease_JUNE
 
-##### Generate raster layers ----
+####### Generate raster layers ----
 
 buffer_map <- meandb_map <- meandb_warm_map <- meanActivity_map <- meanActivity_warm_map <- map
 for(i in 1:length(cells)){
