@@ -10,12 +10,18 @@ Microclimate heterogeneity and behavioural thermoregulation can buffer ectotherm
 ## Repository content: 
 <p> <b> RCode_biophysical_model.R: </b>  Code to generate mechanistic layers (thermoregulatory inaccuracy and thermoregulatory window) </p> 
 <p> <b> Sources file </b> </p>
-    <p> - map.grd/.gri </p>
-    <p> - buffer_map.grd/.gri </p>
-    <p> - meandb_map.grd/.gri </p>
-    <p> - meanActivity_map.grd/.gri </p>
-    <p> - meandb_warm_map.grd/.gri </p>
-    <p> - meanActivity_warm_map.grd/.gri </p>
+    <p> <b> SIMULATION RESULTS </b> </p>
+    <p> - dataMAY.R </p>: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in May (current)
+    <p> - dataJUNE.R </p>: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in June (current)
+    <p> - dataMAY_warm.R </p>: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in May (future)
+    <p> - dataJUNE_warm.R </p>: Body temperatures, operative temperatures, inaccuracy and thermoregulation window in June (future)
+    <p> <b> RASTER LAYERS </b> </p>
+    <p> - map.grd/.gri </p>: base raster layer
+    <p> - buffer_map.grd/.gri </p>: predicted buffer (delta Tb/delta Te)
+    <p> - meandb_map.grd/.gri </p>: thermoregulatory inaccuracy (current conditions)
+    <p> - meanActivity_map.grd/.gri </p>: thermoregulatory window (current conditions)
+    <p> - meandb_warm_map.grd/.gri </p>: thermoregulatory inaccuracy (future)
+    <p> - meanActivity_warm_map.grd/.gri </p>: thermoregulatory window (future)
     
 # Session Info
 R version 4.4.1 (2024-06-14 ucrt)
