@@ -27,7 +27,9 @@ Microclimate heterogeneity and behavioural thermoregulation can buffer ectotherm
   - meanActivity_map.grd/.gri: thermoregulatory window (current conditions)
   - meandb_warm_map.grd/.gri: thermoregulatory inaccuracy (future)
   - meanActivity_warm_map.grd/.gri: thermoregulatory window (future)
-    
+
+**ODMAP_Rubalcaba_etal.csv**: ODMAP protocol for species distribution modeling (Zurell et al. 2020) 
+
 # Session Info
 R version 4.4.1 (2024-06-14 ucrt)
 Platform: x86_64-w64-mingw32/x64
