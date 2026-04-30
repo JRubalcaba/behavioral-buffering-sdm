@@ -1,0 +1,40 @@
+# macOS / system clutter
+.DS_Store
+.Rhistory
+.Rapp.history
+.Rproj.user/
+.Rdata
+*~
+~$*
+
+# RStudio
+*.Rproj
+.Rprofile
+
+# Heavy data not redistributed in the GitHub repo
+data/
+output/
+workflow_psammodromus_*/
+
+# Mechanistic future layers (deposited on Zenodo upon acceptance)
+Sources/SDM/mechanistic_future/
+
+# Local renv library (lockfile is tracked, library is not)
+renv/library/
+renv/staging/
+renv/local/
+
+# Manuscript working directory (not part of the published code repo)
+manuscrito/
+*.docx
+*.pdf
+!Manuscript_supplementary_*.pdf
+
+# Local-only legacy folder
+legacy/
+
+# Editor temporary files
+*.swp
+*.swo
+.idea/
+.vscode/
