@@ -1,7 +1,4 @@
 # R Code and data for the MS: "Behavioural thermoregulation and microclimate reshape climate-driven range forecasts"
-Juan G. Rubalcaba*, Guillermo Fandos, José A. Díaz
-Department of Biodiversity, Ecology and Evolution. Faculty of Biological Sciences. Complutense University of Madrid
-*jg.rubalcaba@gmail.com
 
 Code and data supporting analyses of behavioural buffering and hybrid species distribution models under climate warming.
 ### Abstract
